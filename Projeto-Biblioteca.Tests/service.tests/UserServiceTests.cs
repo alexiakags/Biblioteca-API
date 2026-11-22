@@ -70,6 +70,17 @@ namespace Projeto_Biblioteca.Tests
         // ===============================
 
         [Test]
+        public void CreateUser_DeveRetornarErro_QuandoRequestNulo()
+        {
+            // Act
+            var result = _service.CreateUser(null!);
+
+            // Assert
+            Assert.That(result, Is.EqualTo("error"));
+            _mockRepository.Verify(r => r.AddUser(It.IsAny<TbUser>()), Times.Never);
+        }
+
+        [Test]
         public void CreateUser_DeveRetornarErro_QuandoCpfVazio()
         {
             // Arrange - CPF inválido
@@ -88,6 +99,7 @@ namespace Projeto_Biblioteca.Tests
 
             // Assert - Deve barrar antes de acessar o repositório
             Assert.That(result, Is.EqualTo("CPF é obrigatório."));
+            _mockRepository.Verify(r => r.AddUser(It.IsAny<TbUser>()), Times.Never);
         }
 
         [Test]
@@ -104,10 +116,12 @@ namespace Projeto_Biblioteca.Tests
                 Password = "123"
             };
 
+            // Act
             var result = _service.CreateUser(request);
 
             // Assert
             Assert.That(result, Is.EqualTo("Nome é obrigatório."));
+            _mockRepository.Verify(r => r.AddUser(It.IsAny<TbUser>()), Times.Never);
         }
 
         [Test]
@@ -124,10 +138,12 @@ namespace Projeto_Biblioteca.Tests
                 Password = "123"
             };
 
+            // Act
             var result = _service.CreateUser(request);
 
             // Assert
             Assert.That(result, Is.EqualTo("Email inválido."));
+            _mockRepository.Verify(r => r.AddUser(It.IsAny<TbUser>()), Times.Never);
         }
 
         [Test]
@@ -147,10 +163,12 @@ namespace Projeto_Biblioteca.Tests
             _mockRepository.Setup(r => r.GetUserById("123"))
                            .Returns(new TbUser());
 
+            // Act
             var result = _service.CreateUser(request);
 
             // Assert - Não deve permitir duplicidade
             Assert.That(result, Is.EqualTo("Usuário já cadastrado."));
+            _mockRepository.Verify(r => r.AddUser(It.IsAny<TbUser>()), Times.Never);
         }
 
         [Test]
@@ -168,15 +186,17 @@ namespace Projeto_Biblioteca.Tests
             };
 
             _mockRepository.Setup(r => r.GetUserById("123"))
-                           .Returns((TbUser)null!);
+                           .Returns((TbUser?)null);
 
             _mockRepository.Setup(r => r.GetUserByTelephone("111"))
                            .Returns(new TbUser());
 
+            // Act
             var result = _service.CreateUser(request);
 
             // Assert
             Assert.That(result, Is.EqualTo("Telefone já cadastrado"));
+            _mockRepository.Verify(r => r.AddUser(It.IsAny<TbUser>()), Times.Never);
         }
 
         [Test]
@@ -194,11 +214,12 @@ namespace Projeto_Biblioteca.Tests
             };
 
             _mockRepository.Setup(r => r.GetUserById("123"))
-                           .Returns((TbUser)null!);
+                           .Returns((TbUser?)null);
 
             _mockRepository.Setup(r => r.GetUserByTelephone("111"))
-                           .Returns((TbUser)null!);
+                           .Returns((TbUser?)null);
 
+            // Act
             var result = _service.CreateUser(request);
 
             // Assert - Deve salvar no repositório
@@ -219,9 +240,10 @@ namespace Projeto_Biblioteca.Tests
             _mockRepository.Setup(r => r.GetUserById(cpf))
                            .Returns(new TbUser());
 
+            // Act
             var result = _service.UpdateUser(cpf, new UpdateUserRequestDTO());
 
-            // Deve atualizar e retornar ok
+            // Assert
             Assert.That(result, Is.EqualTo("ok"));
             _mockRepository.Verify(r => r.UpdateUserData(cpf, It.IsAny<UpdateUserRequestDTO>()), Times.Once);
         }
@@ -233,12 +255,14 @@ namespace Projeto_Biblioteca.Tests
 
             // Simula usuário inexistente
             _mockRepository.Setup(r => r.GetUserById(cpf))
-                           .Returns((TbUser)null!);
+                           .Returns((TbUser?)null);
 
+            // Act
             var result = _service.UpdateUser(cpf, new UpdateUserRequestDTO());
 
-            // Não deve atualizar
+            // Assert
             Assert.That(result, Is.EqualTo("error"));
+            _mockRepository.Verify(r => r.UpdateUserData(It.IsAny<string>(), It.IsAny<UpdateUserRequestDTO>()), Times.Never);
         }
 
         // ===============================
@@ -252,12 +276,14 @@ namespace Projeto_Biblioteca.Tests
 
             // Simula usuário inexistente
             _mockRepository.Setup(r => r.GetUserById(cpf))
-                           .Returns((TbUser)null!);
+                           .Returns((TbUser?)null);
 
+            // Act
             var result = _service.DeleteUser(cpf);
 
-            // Deve informar que não encontrou
+            // Assert
             Assert.That(result, Is.EqualTo("não encontrado"));
+            _mockRepository.Verify(r => r.DeleteUser(It.IsAny<string>()), Times.Never);
         }
 
         [Test]
@@ -269,9 +295,10 @@ namespace Projeto_Biblioteca.Tests
             _mockRepository.Setup(r => r.GetUserById(cpf))
                            .Returns(new TbUser());
 
+            // Act
             var result = _service.DeleteUser(cpf);
 
-            // Deve remover e retornar ok
+            // Assert
             Assert.That(result, Is.EqualTo("ok"));
             _mockRepository.Verify(r => r.DeleteUser(cpf), Times.Once);
         }

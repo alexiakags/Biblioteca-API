@@ -119,7 +119,7 @@ public class FineService : IFineService
         if (fine.Ispaid) return "error";
 
         bool ok = _fineRepository.PayFine(fineId, DateOnly.FromDateTime(DateTime.Now));
-        return ok ? "" : "error";
+        return ok ? "ok" : "error";
     }
 
     public bool HasOpenFineByCpf(string userCpf)

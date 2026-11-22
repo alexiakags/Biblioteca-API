@@ -142,10 +142,9 @@ public class LoanService : ILoanService
         // Atualiza estoque (reduz disponibilidade)
         book.Availablequantity--;
 
-        book.Availablequantity--;
         _repository.Save();
 
-        return "";
+        return "ok";
     }
 
     // ✅ RETURN LOAN (Regra 4: notificar primeiro da fila + prazo 3 dias)

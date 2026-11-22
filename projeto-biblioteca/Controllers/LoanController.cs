@@ -1,6 +1,5 @@
-using pBiblioteca.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using pBiblioteca.Models;
 
 namespace pBiblioteca.Controllers;
 
@@ -9,14 +8,18 @@ namespace pBiblioteca.Controllers;
 public class LoanController : ControllerBase
 {
     private readonly ILoanService _service;
-    private readonly IWebHostEnvironment _env;
+    private readonly IWebHostEnvironment? _env;
 
-    public LoanController(ILoanService service, IWebHostEnvironment env)
+    // ✅ Construtor único (env opcional para não quebrar testes)
+    public LoanController(ILoanService service, IWebHostEnvironment? env = null)
     {
-        _service = service;
+        _service = service ?? throw new ArgumentNullException(nameof(service));
         _env = env;
     }
 
+    // =====================================================
+    // GET /Loan
+    // =====================================================
     [HttpGet]
     public IActionResult Get(
         [FromQuery] bool? status,
@@ -27,8 +30,9 @@ public class LoanController : ControllerBase
         return Ok(loans);
     }
 
-
+    // =====================================================
     // GET /Loan/{id}
+    // =====================================================
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {
@@ -40,7 +44,9 @@ public class LoanController : ControllerBase
         return Ok(loan);
     }
 
+    // =====================================================
     // GET /Loan/user/{cpf}
+    // =====================================================
     [HttpGet("user/{cpf}")]
     public IActionResult GetByUser(string cpf)
     {
@@ -52,32 +58,37 @@ public class LoanController : ControllerBase
         return Ok(loans);
     }
 
+    // =====================================================
     // POST /Loan
+    // =====================================================
     [HttpPost]
     public IActionResult Post([FromBody] CreateLoanRequest request)
     {
-        string error = _service.CreateLoan(request);
+        string result = _service.CreateLoan(request);
 
-        if (error == "error")
+        if (result == "error")
             return BadRequest();
 
         return Created("", null);
-
     }
 
-    // PUT /Loan/{id}/return
+    // =====================================================
+    // PUT /Loan/return/{id}
+    // =====================================================
     [HttpPut("return/{id}")]
     public IActionResult ReturnLoan(int id)
     {
-        string error = _service.ReturnLoan(id);
+        string result = _service.ReturnLoan(id);
 
-        if (error == "error")
+        if (result == "error")
             return BadRequest();
 
         return Ok();
     }
 
+    // =====================================================
     // PUT /Loan/renew/{id}
+    // =====================================================
     [HttpPut("renew/{id}")]
     public IActionResult RenewLoan(int id)
     {
@@ -89,18 +100,24 @@ public class LoanController : ControllerBase
         return Ok();
     }
 
+    // =====================================================
     // GET /Loan/report
+    // =====================================================
     [HttpGet("report")]
     public IActionResult GenerateLoanReport()
     {
+        if (_env == null)
+            return BadRequest("Ambiente não configurado para gerar relatório.");
+
         var loans = _service.GetLoans(null, null, null);
 
         if (loans == null || !loans.Any())
             return NotFound("Nenhum empréstimo encontrado.");
 
-        var linhas = new List<string>();
-
-        linhas.Add("LoanId;UserCpf;BookIsbn;LoanDate;DueDate;ReturnDate;Status;DiasAtraso");
+        var linhas = new List<string>
+        {
+            "LoanId;UserCpf;BookIsbn;LoanDate;DueDate;ReturnDate;Status;DiasAtraso"
+        };
 
         foreach (var loan in loans)
         {
@@ -110,8 +127,8 @@ public class LoanController : ControllerBase
                 loan.DueDate < DateOnly.FromDateTime(DateTime.Today))
             {
                 diasAtraso =
-                    DateOnly.FromDateTime(DateTime.Today)
-                    .DayNumber - loan.DueDate.DayNumber;
+                    DateOnly.FromDateTime(DateTime.Today).DayNumber
+                    - loan.DueDate.DayNumber;
             }
 
             var status = loan.ReturnDate == null
@@ -138,6 +155,9 @@ public class LoanController : ControllerBase
                     nomeArquivo);
     }
 
+    // =====================================================
+    // GET /Loan/details
+    // =====================================================
     [HttpGet("details")]
     public IActionResult GetDetails(
         [FromQuery] bool? status,
@@ -152,7 +172,9 @@ public class LoanController : ControllerBase
         return Ok(result);
     }
 
+    // =====================================================
     // GET /Loan/user/{cpf}/active
+    // =====================================================
     [HttpGet("user/{cpf}/active")]
     public IActionResult GetActiveLoansByUser(string cpf)
     {
@@ -164,7 +186,9 @@ public class LoanController : ControllerBase
         return Ok(loans);
     }
 
+    // =====================================================
     // GET /Loan/user/{cpf}/history
+    // =====================================================
     [HttpGet("user/{cpf}/history")]
     public IActionResult GetLoanHistoryByUser(string cpf)
     {
@@ -175,6 +199,4 @@ public class LoanController : ControllerBase
 
         return Ok(loans);
     }
-    
-
 }
